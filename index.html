@@ -136,6 +136,32 @@
             </div>
         </section>
 
+        <!-- PLACES DATA TABLE SECTION -->
+        <section class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Daftar Tempat (Supabase Data)</h2>
+                <p class="text-slate-600 text-sm">Data tempat populer yang dimuat langsung dari database Supabase.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="places" class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 bg-slate-50 text-slate-700 text-sm">
+                            <th class="p-3">Nama</th>
+                            <th class="p-3">Kategori</th>
+                            <th class="p-3">Rating</th>
+                            <th class="p-3">Review</th>
+                            <th class="p-3">Kota</th>
+                            <th class="p-3">Telepon</th>
+                            <th class="p-3">Maps</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm text-slate-600 divide-y divide-slate-100">
+                        <tr><td colspan="7" class="p-4 text-center">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         <!-- INTERACTIVE SIMULATION -->
         <section class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
             <div class="text-center mb-6">
@@ -193,8 +219,57 @@
         </div>
     </footer>
 
-    <!-- JAVASCRIPT SIMULATION -->
+    <!-- JAVASCRIPT SIMULATION & SUPABASE LOADER -->
     <script>
+        // Supabase Integration Script
+        const SUPABASE_URL = ''; // isi dengan SUPABASE_URL Anda
+        const SUPABASE_KEY = 'sb_publishable_Ipy6E0sHUzjq6TmU3p-nnA_f8SRdjWX'; // publishable key, BUKAN secret key
+
+        async function loadPlaces() {
+            const tbody = document.querySelector('#places tbody');
+            try {
+                const res = await fetch(
+                    SUPABASE_URL + '/rest/v1/places?select=*&order=reviews_count.desc.nullslast&limit=100',
+                    { headers: { apikey: SUPABASE_KEY } }
+                );
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const rows = await res.json();
+
+                tbody.replaceChildren();
+                for (const p of rows) {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    for (const v of [p.title, p.category_name, p.total_score, p.reviews_count, p.city, p.phone]) {
+                        const td = document.createElement('td');
+                        td.className = "p-3";
+                        td.textContent = v ?? '-';
+                        tr.appendChild(td);
+                    }
+                    const td = document.createElement('td');
+                    td.className = "p-3";
+                    if (p.url && p.url.startsWith('https://')) {
+                        const a = document.createElement('a');
+                        a.href = p.url;
+                        a.target = '_blank';
+                        a.rel = 'noopener';
+                        a.textContent = 'Buka';
+                        a.className = "text-indigo-600 hover:underline font-medium";
+                        td.appendChild(a);
+                    } else {
+                        td.textContent = '-';
+                    }
+                    tr.appendChild(td);
+                    tbody.appendChild(tr);
+                }
+                if (!rows.length) tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center">Belum ada data.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-rose-600">Gagal memuat data. Pastikan SUPABASE_URL telah diisi dengan benar.</td></tr>';
+                console.error(e);
+            }
+        }
+        loadPlaces();
+
+        // Simulation Script
         const simData = {
             1: {
                 user: "Tolong cek jadwal saya hari ini.",
